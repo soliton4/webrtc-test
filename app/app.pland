@@ -1,0 +1,215 @@
+
+var peerConnection;
+() exclusive "client" {
+  peerConnection = require "./peerConnection"
+}();
+
+class type sync all RtConnection {
+  constructor: (){
+    
+    this.local = {}; // this is a trick, everything thats not part of the object literal is not synced
+                     // still have to implement some sync syntax details. right now its eather all or nothing
+    this.isOffering = (){
+      return this.local.isOffering;
+    };
+    this.isAnswering = (){
+      return this.local.isAnswering;
+    };
+    RtConnection self = this;
+    var peerConfig = {
+      
+      onChannelMessage: (event){
+        self.onData(event.data);
+      },
+      onChannelOpened: (event){
+        self.local.conPs.resolve();
+      },
+      onChannelClosed: (event){
+        debugger;
+      },
+      onChannelError: (event){
+        debugger;
+      }
+      
+    };
+    
+    var addCandidates = (parCandidates){
+      var i = 0;
+      for (i = 0; i < parCandidates.length; ++i){
+        self.local.connection["addICE"]({
+          "sdpMLineIndex": parCandidates[i]["sdpMLineIndex"],
+          "candidate": JSON["parse"](parCandidates[i]["candidate"])
+        });
+      };
+    };
+    this.local.addCandidates = addCandidates;
+    
+    this.init = (){
+      
+      if (self.taken){
+        throw {
+          msg: "this connection is allready taken"
+        };
+      };
+      
+      var initPs = new Promise();
+      self.local.conPs = new Promise();
+      self.waitForConnection = (){
+        *self.local.conPs;
+      };
+      self.send = (par){
+        self.local.connection.sendData(par);
+      };
+      self.onData = (parData){
+      };
+      
+      if (!self.offer){
+        
+        self.local.isOffering = true;
+        self.offer = {};
+        peerConfig.onOfferSDP = (parSdp){
+          self.offer.sdp = parSdp;
+          self.offer = self.offer;
+          initPs.resolve();
+        };
+        peerConfig.onICE = (candidate){
+          self.addOfferCandidate({
+            "sdpMLineIndex": candidate["sdpMLineIndex"],
+            "candidate": JSON["stringify"](candidate["candidate"])
+          });
+        };
+        self.local.connection = peerConnection(peerConfig);
+        
+      }else{
+        self.local.isAnswering = true;
+        self.answer = {};
+        peerConfig.offerSDP = self.offer.sdp;
+        peerConfig.onICE = (candidate){
+          self.addAnswerCandidate({
+            "sdpMLineIndex": candidate["sdpMLineIndex"],
+            "candidate": JSON["stringify"](candidate["candidate"])
+          });
+        };
+        peerConfig.onAnswerSDP = (parSdp){
+          self.answer.sdp = parSdp;
+          self.answer = self.answer;
+          self.answerExists(self.answer);
+          addCandidates(self.offerCandidates);
+          initPs.resolve();
+        };
+        self.local.connection = peerConnection(peerConfig);
+        
+      };
+      *initPs;
+    };
+  },
+  offer: undefined,
+  answer: undefined,
+  offerCandidates: [],
+  answerCandidates: [],
+  addOfferCandidate: var (parCandidate){
+    if (this.isOffering()){
+      this.offerCandidates.push(parCandidate);
+      this.offerCandidates = this.offerCandidates;
+    };
+    if (this.isAnswering()){
+      this.local.addCandidates([parCandidate]);
+    };
+  },
+  addAnswerCandidate: var (parCandidate){
+    if (this.isAnswering()){
+      this.answerCandidates.push(parCandidate);
+      this.answerCandidates = this.offerCandidates;
+    };
+    if (this.isOffering()){
+      this.local.addCandidates([parCandidate]);
+    };
+  },
+  answerExists: var (parAnswer){
+    if (this.isOffering()){
+      this.local.connection.addAnswerSDP(parAnswer.sdp);
+    };
+  }
+    
+};
+
+RtConnection currentOffer;
+
+makeOffer (RtConnection parOffer) frame "server" {
+  console.log("exec make offer")
+  currentOffer = parOffer;
+};
+
+RtConnection* takeOffer () frame "server" {
+  console.log("executing take offer");
+  console.log(currentOffer.local);
+  return currentOffer;
+};
+
+
+wait (t){
+  var c = new Callback();
+  setTimeout(c, t);
+  *c.promise;
+}
+
+RtConnection localConnection;
+  
+
+() exclusive "client" {
+  
+  var btn = document.createElement("BUTTON");
+  var t = document.createTextNode("create offer");
+  btn.appendChild(t);
+  document.body.appendChild(btn);
+  btn.addEventListener("click", (){
+    
+    localConnection = new RtConnection();
+    *localConnection.init();
+    *makeOffer(localConnection);
+    
+    *localConnection.waitForConnection()
+    
+    startLoop();
+  });
+  
+  
+  btn = document.createElement("BUTTON");
+  t = document.createTextNode("take offer");
+  btn.appendChild(t);
+  document.body.appendChild(btn);
+  btn.addEventListener("click", (){
+    
+    localConnection = *takeOffer();
+    *localConnection.init();
+    
+    *localConnection.waitForConnection()
+    startLoop();
+  });
+  
+  
+  var startLoop = (){
+    print("connected");
+    var tb = document.createElement('input'); 
+    tb.type = "text";
+    document.body.appendChild(tb);
+    
+    var btn = document.createElement("BUTTON");
+    var t = document.createTextNode("send");
+    btn.appendChild(t);
+    document.body.appendChild(btn);
+    btn.addEventListener("click", (){
+      localConnection.send(tb.value);
+    });
+    localConnection.onData = (data){
+      print(data);
+    };
+  };
+  var print = (text){
+    var p = document.createElement("p");
+    var t = document.createTextNode(text);
+    p.appendChild(t);
+    document.body.appendChild(p);
+  };
+  
+}();

@@ -1,0 +1,21 @@
+try{
+  var Fw = require "promiseland-webframework";
+  var fw = new Fw({
+    load: "app/app",
+    requireConfig: {
+      shim: {
+        "app/peerConnection": {
+          exports: 'RTCPeerConnection'
+        }
+      }
+    },
+    dirs: [{
+      client: "/app",
+      server: __dirname + "/app/"
+    }]
+  });
+  fw.listen(3004);
+  require "./app/app";
+}catch(e){
+  console.log(e);
+};

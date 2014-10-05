@@ -1,0 +1,29 @@
+{
+  "name": "webrtc-test",
+  "version": "0.0.3",
+  "author": {
+    "name": "Matthias Behrens",
+    "email": "matthias.behrens@gmail.com"
+  },
+  "description": "a synced object representing a webrtc connection",
+  "main": "index.js",
+  "dependencies": {
+    "promiseland": "0.0.12",
+    "promiseland-webframework": "0.1.1"
+  },
+  "keywords": [
+    "promiseland",
+    "webrtc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soliton4/webrtc-test"
+  },
+  "license": "bsd",
+  "engines": {
+    "node": ">=0.10"
+  },
+  "bugs": {
+    "url": "https://github.com/soliton4/webrtc-test/issues"
+  }
+}
